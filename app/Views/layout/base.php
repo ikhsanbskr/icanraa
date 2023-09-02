@@ -135,7 +135,7 @@
 
           <li class="side-nav-item">
             <a data-bs-toggle="collapse" href="#sidebarTabungan" aria-expanded="false" aria-controls="sidebarTabungan" class="side-nav-link">
-              <i class="uil-store"></i>
+              <i class="uil-moneybag"></i>
               <span> Tabungan </span>
               <span class="menu-arrow"></span>
             </a>
@@ -152,21 +152,10 @@
           </li>
 
           <li class="side-nav-item">
-            <a data-bs-toggle="collapse" href="#sidebarEcommerce" aria-expanded="false" aria-controls="sidebarEcommerce" class="side-nav-link">
-              <i class="uil-store"></i>
+            <a href="/celengan" class="side-nav-link">
+              <i class="mdi mdi-piggy-bank"></i>
               <span> Celengan </span>
-              <span class="menu-arrow"></span>
             </a>
-            <div class="collapse" id="sidebarEcommerce">
-              <ul class="side-nav-second-level">
-                <li>
-                  <a href="/celengan/pemasukan">Pemasukan</a>
-                </li>
-                <li>
-                  <a href="/celengan/pengeluaran">Pengeluaran</a>
-                </li>
-              </ul>
-            </div>
           </li>
 
           <li class="side-nav-item">

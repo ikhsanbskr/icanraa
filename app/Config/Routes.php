@@ -35,8 +35,9 @@ $routes->post('/deposit/tambah', 'Keuangan::tambahDeposit', ['filter' => 'login'
 $routes->get('/pengeluaran', 'Keuangan::pengeluaran', ['filter' => 'login']);
 $routes->post('/pengeluaran/tambah', 'Keuangan::tambahPengeluaran', ['filter' => 'login']);
 
-$routes->get('/celengan/pemasukan', 'Keuangan::celenganPemasukan', ['filter' => 'login']);
-$routes->get('/celengan/pengeluaran', 'Keuangan::celenganPengeluaran', ['filter' => 'login']);
+$routes->get('/celengan', 'Keuangan::celenganIndex', ['filter' => 'login']);
+$routes->post('/celengan/deposit', 'Keuangan::celenganDeposit', ['filter' => 'login']);
+$routes->post('/celengan/penarikan', 'Keuangan::celenganPenarikan', ['filter' => 'login']);
 
 
 $routes->get('/agenda', 'Agenda::index', ['filter' => 'login']);

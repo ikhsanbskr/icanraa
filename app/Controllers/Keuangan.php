@@ -2,21 +2,20 @@
 
 namespace App\Controllers;
 
-use App\Models\ModelCelenganPemasukan;
-use App\Models\ModelCelenganPemasukkan;
+use App\Models\modelCelengan;
 use App\Models\ModelPemasukan;
 use App\Models\ModelPengeluaran;
 use App\Models\ModelSaldo;
 
 class Keuangan extends BaseController
 {
-    protected $modelPemasukan, $modelSaldo, $modelPengeluaran, $modelCelenganPemasukan;
+    protected $modelPemasukan, $modelSaldo, $modelPengeluaran, $modelCelengan;
     public function __construct()
     {
         $this->modelPemasukan         = new ModelPemasukan();
         $this->modelSaldo             = new ModelSaldo();
         $this->modelPengeluaran       = new ModelPengeluaran();
-        $this->modelCelenganPemasukan = new ModelCelenganPemasukan();
+        $this->modelCelengan = new modelCelengan();
     }
 
     public function index()
@@ -219,16 +218,90 @@ class Keuangan extends BaseController
         return redirect()->back();
     }
 
-    public function celenganPemasukan()
+    public function celenganIndex()
     {
-        $data = [
-            'title'     => 'Celengan Pemasukan',
-            'saldo'     => $this->modelSaldo->first(),
-            'deposit'   => $this->modelCelenganPemasukan
-                ->orderBy('tgl_pemasukan DESC, jam_pemasukan DESC')
-                ->findAll(),
-        ];
+        // Persentase Peningkatan Dari Bulan Lalu
+        $pemasukan_lalu     = $this->modelCelengan->pemasukanLalu();
+        $pemasukan_ini      = $this->modelCelengan->pemasukanSekarang();
+        $jml_peningkatan    = intval($pemasukan_ini['nominal_transaksi']) - intval($pemasukan_lalu['nominal_transaksi']);
 
-        return view('/celengan/pemasukan', $data);
+        if (intval($pemasukan_lalu['nominal_transaksi']) <= 0) {
+            $persen_peningkatan = 0;
+        } else {
+            $persen_peningkatan = $jml_peningkatan / intval($pemasukan_lalu['nominal_transaksi']);
+        }
+
+        $data = [
+            'title'         => 'Celengan',
+            'saldo'         => $this->modelSaldo->first(),
+            'deposit'       => $this->modelCelengan
+                ->orderBy('tgl_transaksi DESC, jam_transaksi DESC')
+                ->findAll(),
+            'pemasukan'     => $this->modelCelengan->selectSum('nominal_transaksi')->first(),
+            'peningkatan'   => $persen_peningkatan
+        ];
+        return view('/celengan/index', $data);
+    }
+
+    public function celenganDeposit()
+    {
+        $pemasukan = preg_replace('/\D/', "", $this->request->getVar('nominal_transaksi'));
+
+        $saldo = $this->modelSaldo->first();
+        $saldo_baru = $saldo['isi_saldo'] - $pemasukan;
+
+        if ($saldo_baru < 0) {
+            session()->setFlashdata('error', 'Saldo tidak mencukupi');
+            return redirect()->back();
+        }
+
+        $data = [
+            'tgl_transaksi'       => date('Y-m-d'),
+            'jam_transaksi'       => date('H:i:s'),
+            'nominal_transaksi'   => $pemasukan,
+            'status'              => 'deposit'
+        ];
+        $this->modelCelengan->save($data);
+
+        $dataSaldo = [
+            'id_saldo'  => 1,
+            'isi_saldo' => $saldo_baru
+        ];
+        $this->modelSaldo->save($dataSaldo);
+
+        session()->setFlashdata('pesan', 'Transaksi deposit berhasil.');
+        return redirect()->back();
+    }
+
+    public function celenganPenarikan()
+    {
+        $penarikan = preg_replace('/\D/', "", $this->request->getVar('nominal_transaksi'));
+        $saldo = $this->modelSaldo->first();
+        $saldo_celengan = $this->modelCelengan->selectSum('nominal_transaksi')->first();
+
+        if ($penarikan > $saldo_celengan['nominal_transaksi']) {
+            session()->setFlashdata('error', 'Penarikan telah melebihi saldo celengan.');
+            return redirect()->back();
+        }
+
+        $data = [
+            'tgl_transaksi'     => date('Y-m-d'),
+            'jam_transaksi'     => date('H:i:s'),
+            'nominal_transaksi' => '-' . $penarikan,
+            'keterangan'        => $this->request->getVar('keterangan'),
+            'status'            => 'penarikan'
+        ];
+        $this->modelCelengan->save($data);
+
+        $saldo_baru = $saldo['isi_saldo'] + $penarikan;
+
+        $dataSaldo = [
+            'id_saldo'  => 1,
+            'isi_saldo' => $saldo_baru
+        ];
+        $this->modelSaldo->save($dataSaldo);
+
+        session()->setFlashdata('pesan', 'Transaksi penarikan berhasil.');
+        return redirect()->back();
     }
 }
